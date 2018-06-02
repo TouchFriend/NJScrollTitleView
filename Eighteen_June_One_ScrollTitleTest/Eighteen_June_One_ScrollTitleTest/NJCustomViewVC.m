@@ -17,6 +17,9 @@
 /********* <#注释#> *********/
 @property(nonatomic,strong)NSArray<NSString *> * titleArr;
 
+
+/********* <#注释#> *********/
+@property(nonatomic,weak)NJScrollTitleView * scrollTitleView;
 @end
 
 @implementation NJCustomViewVC
@@ -29,8 +32,25 @@
     
     NJScrollTitleView * scrollTitleView = [NJScrollTitleView scrollTitleViewWithFrame:CGRectMake(0, 100, ScreenWidth, 200) delegate:self dataSource:self];
 
-    
+    self.scrollTitleView = scrollTitleView;
     [self.view addSubview:scrollTitleView];
+    
+    
+}
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    [super touchesBegan:touches withEvent:event];
+    
+    self.titleArr = @[
+                      @"new 111",
+                      @"new 222",
+                      @"new 333",
+                      @"new 444",
+                      ];
+    
+    [self.scrollTitleView reloadData];
+    
 }
 
 #pragma mark - NJScrollTitleViewDataSource方法

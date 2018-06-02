@@ -53,6 +53,7 @@
     return self;
 }
 
+
 //解决当父View释放时，当前视图因为被Timer强引用而不能释放的问题
 - (void)willMoveToSuperview:(UIView *)newSuperview
 {
@@ -173,6 +174,94 @@
     }
 }
 
+#pragma mark - 自定义view
+- (void)setDataSource:(id<NJScrollTitleViewDataSource>)dataSource
+{
+    _dataSource = dataSource;
+    
+    [self loadCustomViews];
+}
+
+//加载定义views
+- (void)loadCustomViews
+{
+    if([self isImplementDataSourceMethod])
+    {
+        [self invaditeTimer];
+        
+        //定时器无效
+        [self invaditeTimer];
+        
+        //清除scrollView子view
+        [self.scrollView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        
+        NSInteger count = [self.dataSource numberOfViewsInScrollTitleView:self];
+        if(count == 0)
+        {
+            NSLog(@"%s:无数据", __func__);
+            return;
+        }
+        
+        
+        NSMutableArray<UIView *> * tempViewArrM = [NSMutableArray array];
+        
+        for (NSInteger i = 0; i < count; i++) {
+            
+            UIView * tempView = [self.dataSource scrollTitleView:self viewForRowAtIndex:i];
+            
+            [tempViewArrM addObject:tempView];
+            
+        }
+        
+        UIView * firstTempView = [self.dataSource scrollTitleView:self viewForRowAtIndex:0];
+        
+        UIView * lastTempView = [self.dataSource scrollTitleView:self viewForRowAtIndex:count - 1];
+        
+        [tempViewArrM insertObject:lastTempView atIndex:0];
+        [tempViewArrM addObject:firstTempView];
+        
+        self.viewCount = tempViewArrM.count;
+        
+        CGSize scrollViewSize = self.scrollView.bounds.size;
+        
+        
+        CGFloat tempViewWidth = scrollViewSize.width;
+        CGFloat tempViewHeight = scrollViewSize.height;
+        [tempViewArrM enumerateObjectsUsingBlock:^(UIView * _Nonnull tempView, NSUInteger idx, BOOL * _Nonnull stop) {
+            CGFloat tempViewY = idx * tempViewHeight;
+            tempView.frame = CGRectMake(0, tempViewY, tempViewWidth, tempViewHeight);
+            
+            UITapGestureRecognizer * tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tempViewClick:)];
+            [tempView addGestureRecognizer:tapGesture];
+            
+            [self.scrollView addSubview:tempView];
+            
+        }];
+        
+        self.scrollView.contentSize = CGSizeMake(scrollViewSize.width, scrollViewSize.height * tempViewArrM.count);
+        self.scrollView.contentOffset = CGPointMake(0, scrollViewSize.height);
+        
+        //设置定时器
+        [self setupTimer];
+        
+    }
+}
+
+//是否实现dataSource方法
+- (BOOL)isImplementDataSourceMethod
+{
+    if(self.dataSource == nil)
+    {
+        return NO;
+    }
+    
+    return ([self.dataSource respondsToSelector:@selector(numberOfViewsInScrollTitleView:)] && [self.dataSource respondsToSelector:@selector(scrollTitleView:viewForRowAtIndex:)]);
+}
+
+- (void)reloadData
+{
+    [self loadCustomViews];
+}
 
 #pragma mark - 其他
 
@@ -257,81 +346,7 @@
     self.timer = nil;
 }
 
-- (void)setDataSource:(id<NJScrollTitleViewDataSource>)dataSource
-{
-    _dataSource = dataSource;
-    if([self isImplementDataSourceMethod])
-    {
-        [self invaditeTimer];
-        
-        //定时器无效
-        [self invaditeTimer];
-         
-         //清除scrollView子view
-        [self.scrollView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-        
-        NSInteger count = [self.dataSource numberOfViewsInScrollTitleView:self];
-        if(count == 0)
-        {
-            NSLog(@"%s:无数据", __func__);
-            return;
-        }
-        
-        
-        NSMutableArray<UIView *> * tempViewArrM = [NSMutableArray array];
-        
-        for (NSInteger i = 0; i < count; i++) {
-            
-            UIView * tempView = [self.dataSource scrollTitleView:self viewForRowAtIndex:i];
-            
-            [tempViewArrM addObject:tempView];
-            
-        }
-        
-        UIView * firstTempView = [self.dataSource scrollTitleView:self viewForRowAtIndex:0];
-        
-        UIView * lastTempView = [self.dataSource scrollTitleView:self viewForRowAtIndex:count - 1];
-        
-        [tempViewArrM insertObject:lastTempView atIndex:0];
-        [tempViewArrM addObject:firstTempView];
-        
-        self.viewCount = tempViewArrM.count;
-        
-        CGSize scrollViewSize = self.scrollView.bounds.size;
-        
-        
-        CGFloat tempViewWidth = scrollViewSize.width;
-        CGFloat tempViewHeight = scrollViewSize.height;
-        [tempViewArrM enumerateObjectsUsingBlock:^(UIView * _Nonnull tempView, NSUInteger idx, BOOL * _Nonnull stop) {
-            CGFloat tempViewY = idx * tempViewHeight;
-            tempView.frame = CGRectMake(0, tempViewY, tempViewWidth, tempViewHeight);
-            
-            UITapGestureRecognizer * tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tempViewClick:)];
-            [tempView addGestureRecognizer:tapGesture];
-            
-            [self.scrollView addSubview:tempView];
-            
-        }];
-        
-        self.scrollView.contentSize = CGSizeMake(scrollViewSize.width, scrollViewSize.height * tempViewArrM.count);
-        self.scrollView.contentOffset = CGPointMake(0, scrollViewSize.height);
-        
-        //设置定时器
-        [self setupTimer];
-        
-    }
-}
 
-//是否实现dataSource方法
-- (BOOL)isImplementDataSourceMethod
-{
-    if(self.dataSource == nil)
-    {
-        return NO;
-    }
-    
-    return ([self.dataSource respondsToSelector:@selector(numberOfViewsInScrollTitleView:)] && [self.dataSource respondsToSelector:@selector(scrollTitleView:viewForRowAtIndex:)]);
-}
 
 - (void)dealloc
 {

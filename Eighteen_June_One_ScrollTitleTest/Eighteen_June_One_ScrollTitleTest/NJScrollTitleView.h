@@ -79,8 +79,12 @@
 /********* 对齐方式 默认居中 *********/
 @property(nonatomic,assign)NSTextAlignment textAlignment;
 
-
 //当前坐标
 - (NSInteger)currentIndex;
 
+
+/**
+ 重新加载数据(自定义view)
+ */
+- (void)reloadData;
 @end
