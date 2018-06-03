@@ -1,2 +1,5 @@
 # NJScrollTitleView
-垂直滚动标题view
+# 介绍
+
+# 效果图
+
